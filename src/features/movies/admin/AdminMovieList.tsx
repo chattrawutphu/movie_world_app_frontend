@@ -124,6 +124,7 @@ const AdminMovieList: React.FC = () => {
                       color="info"
                       component={RouterLink}
                       to={`/movies/${movie.id}`}
+                      state={{ from: 'admin' }}
                       size="small"
                       title="View"
                     >
