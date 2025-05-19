@@ -17,6 +17,8 @@ import {
 import { useMovies } from '../../hooks/useMovieQueries';
 import MovieCardSkeleton from '../../components/skeletons/MovieCardSkeleton';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -25,6 +27,7 @@ interface MovieCardProps {
 }
 
 const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
+  const { t } = useTranslation();
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
@@ -54,14 +57,12 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
               justifyContent: 'center',
               bgcolor: 'grey.100',
             }}
-          >
-            <MovieCardSkeleton />
-          </Box>
+          />
         )}
         <CardMedia
           component="img"
           image={movie.imageUrl || '/placeholder-image.jpg'}
-          alt={movie.title || 'Movie'}
+          alt={movie.title || t('movies.imagePlaceholder')}
           sx={{
             position: 'absolute',
             top: 0,
@@ -74,7 +75,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
           onLoad={() => setImageLoaded(true)}
         />
       </Box>
-      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography 
           variant="h6" 
           component="h2" 
@@ -91,7 +92,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
             WebkitBoxOrient: 'vertical',
           }}
         >
-          {movie.title || 'Untitled'}
+          {movie.title || t('movies.imagePlaceholder')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <Rating 
@@ -106,13 +107,13 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
         </Box>
         <Box sx={{ mb: 2 }}>
           <Chip 
-            label={movie.genre || 'Unknown'} 
+            label={movie.genre ? t(`genres.${movie.genre.toLowerCase().replace(/-/g, '')}`) || movie.genre : t('movies.genre')} 
             size="small" 
             color="primary" 
             sx={{ fontSize: '0.75rem', mr: 1 }}
           />
           <Chip 
-            label={movie.releaseYear || 'N/A'} 
+            label={movie.releaseYear || t('movies.releaseYear')} 
             size="small" 
             sx={{ fontSize: '0.75rem' }}
           />
@@ -132,10 +133,10 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
             lineHeight: 1.5,
           }}
         >
-          {movie.description || 'No description available'}
+          {movie.description || t('movies.description')}
         </Typography>
       </CardContent>
-      <CardActions sx={{ p: 2, pt: 0 }}>
+      <CardActions>
         <Button 
           size="small" 
           component={RouterLink} 
@@ -143,7 +144,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
           variant="outlined"
           fullWidth
         >
-          View Details
+          {t('common.viewDetails')}
         </Button>
       </CardActions>
     </Card>
@@ -151,50 +152,36 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
 };
 
 const MovieList: React.FC = () => {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isLoading,
-    isError,
-    error,
-    isFetchingNextPage,
-  } = useMovies(1, ITEMS_PER_PAGE);
+  const { t } = useTranslation();
+  const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError, error, fetchNextPage, hasNextPage } = useMovies(1, ITEMS_PER_PAGE);
+  
+  const movies = data?.pages.flatMap(page => page.movies) || [];
+  const totalCount = data?.pages[0]?.total || 0;
+  
+  const loadMoreMovies = () => {
+    if (hasNextPage) {
+      setPage(prev => prev + 1);
+      fetchNextPage();
+    }
+  };
 
-  const movies = data?.pages.flatMap((page) => page.movies) ?? [];
-  const skeletonArray = Array(ITEMS_PER_PAGE).fill(null);
-
-  if (isError) {
+  const resetMovieList = () => {
+    queryClient.removeQueries({ queryKey: ['movies'] });
+    setPage(1);
+    window.location.reload();
+  };
+  
+  if (isLoading && page === 1) {
     return (
-      <Container maxWidth="xl" sx={{ mt: 4, px: { xs: 2, sm: 3 } }}>
-        <Alert severity="error">
-          {error instanceof Error ? error.message : 'An error occurred while fetching movies'}
-        </Alert>
-      </Container>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Container maxWidth="xl" sx={{ mt: 4, px: { xs: 2, sm: 3 } }}>
+      <Container sx={{ mt: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Movies
+          {t('movies.movies')}
         </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {skeletonArray.map((_, index) => (
-            <Box 
-              key={`skeleton-${index}`}
-              sx={{
-                flexGrow: 1,
-                width: {
-                  xs: '100%',
-                  sm: 'calc(50% - 12px)',
-                  md: 'calc(33.33% - 16px)',
-                  lg: 'calc(25% - 18px)',
-                  xl: 'calc(20% - 19.2px)',
-                },
-              }}
-            >
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -1.5 }}>
+          {Array.from(new Array(8)).map((_, index) => (
+            <Box key={index} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%', lg: '25%' }, p: 1.5 }}>
               <MovieCardSkeleton />
             </Box>
           ))}
@@ -202,66 +189,74 @@ const MovieList: React.FC = () => {
       </Container>
     );
   }
-
+  
+  if (isError) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="error">
+          {error?.message || t('errors.somethingWentWrong')}
+        </Alert>
+        <Box sx={{ mt: 2 }}>
+          <Button variant="contained" color="primary" onClick={resetMovieList}>
+            {t('common.retry')}
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+  
+  if (movies.length === 0) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          {t('movies.movies')}
+        </Typography>
+        <Alert severity="info">{t('common.noResults')}</Alert>
+        <Box sx={{ mt: 2 }}>
+          <Button variant="contained" color="primary" onClick={resetMovieList}>
+            {t('common.resetPage')}
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+  
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, px: { xs: 2, sm: 3 } }}>
-      <Typography 
-        variant="h4" 
-        component="h1" 
-        gutterBottom
-        sx={{ 
-          fontWeight: 600,
-          mb: 3
-        }}
-      >
-        Movies
+    <Container sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        {t('movies.movies')}
       </Typography>
-
+      
       <InfiniteScroll
         dataLength={movies.length}
-        next={fetchNextPage}
+        next={loadMoreMovies}
         hasMore={!!hasNextPage}
         loader={
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <CircularProgress />
           </Box>
         }
         endMessage={
-          <Typography variant="body1" textAlign="center" color="text.secondary" sx={{ my: 4 }}>
-            No more movies to load.
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ textAlign: 'center', mt: 4 }}
+          >
+            {totalCount > 0
+              ? `${t('movies.movies')} (${movies.length}/${totalCount})`
+              : t('common.noResults')}
           </Typography>
         }
-        style={{ overflow: 'visible' }}
+        style={{ overflow: 'visible', height: 'auto' }}
       >
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {movies.map((movie) => {
-            if (!movie) return null;
-            return (
-              <Box 
-                key={movie.id}
-                sx={{
-                  flexGrow: 1,
-                  width: {
-                    xs: '100%',
-                    sm: 'calc(50% - 12px)',
-                    md: 'calc(33.33% - 16px)',
-                    lg: 'calc(25% - 18px)',
-                    xl: 'calc(20% - 19.2px)',
-                  },
-                }}
-              >
-                <MovieCard movie={movie} />
-              </Box>
-            );
-          })}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -1.5 }}>
+          {movies.map((movie) => (
+            <Box key={movie.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.333%', lg: '25%' }, p: 1.5 }}>
+              <MovieCard movie={movie} />
+            </Box>
+          ))}
         </Box>
       </InfiniteScroll>
-
-      {isFetchingNextPage && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
     </Container>
   );
 };

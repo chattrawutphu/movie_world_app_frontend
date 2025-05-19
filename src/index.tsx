@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -6,6 +6,20 @@ import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persist
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import './i18n';
+
+// สร้าง Loading Component สำหรับใช้กับ Suspense
+const Loading: React.FC = () => (
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    height: '100vh',
+    fontSize: '1.5rem' 
+  }}>
+    Loading...
+  </div>
+);
 
 // Create a client
 const queryClient = new QueryClient({
@@ -40,7 +54,9 @@ const Root: React.FC = () => {
           buster: process.env.REACT_APP_VERSION || 'v1',
         }}
       >
-        <App />
+        <Suspense fallback={<Loading />}>
+          <App />
+        </Suspense>
       </PersistQueryClientProvider>
     </React.StrictMode>
   );

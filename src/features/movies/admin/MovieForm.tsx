@@ -12,9 +12,6 @@ import {
   Rating,
   CircularProgress,
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
-import { GridProps } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { 
   createMovie, 
@@ -56,8 +53,6 @@ const initialFormData: MovieFormData = {
   rating: 0,
   imageUrl: 'https://picsum.photos/seed/default/300/450',
 };
-
-const StyledGrid = styled(Grid)({}) as typeof Grid;
 
 const MovieForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -189,7 +184,7 @@ const MovieForm: React.FC = () => {
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
         
         <Box component="form" onSubmit={handleSubmit}>
-          <Box sx={{ display: 'grid', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
               <TextField
                 label="Title"

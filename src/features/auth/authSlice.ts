@@ -1,4 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../app/store';
 import api from '../../app/api';
 
 interface User {
@@ -89,6 +91,9 @@ const authSlice = createSlice({
       });
   },
 });
+
+// Create a hook to use the auth state in components
+export const useAuth = () => useSelector((state: RootState) => state.auth);
 
 export const { logout } = authSlice.actions;
 export default authSlice.reducer; 

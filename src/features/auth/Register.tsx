@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Typography, Box, Paper, Container, Alert } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { register } from './authSlice';
+import { useTranslation } from 'react-i18next';
 
 const Register: React.FC = () => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,12 +22,12 @@ const Register: React.FC = () => {
     setFormError('');
     
     if (!name || !email || !password || !confirmPassword) {
-      setFormError('All fields are required');
+      setFormError(t('auth.allFieldsRequired'));
       return;
     }
     
     if (password !== confirmPassword) {
-      setFormError('Passwords do not match');
+      setFormError(t('auth.passwordsDoNotMatch'));
       return;
     }
     
@@ -40,7 +42,7 @@ const Register: React.FC = () => {
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Typography variant="h4" align="center" gutterBottom>
-          Register
+          {t('auth.register')}
         </Typography>
         
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -48,7 +50,7 @@ const Register: React.FC = () => {
         
         <Box component="form" onSubmit={handleSubmit}>
           <TextField
-            label="Name"
+            label={t('auth.name')}
             fullWidth
             margin="normal"
             value={name}
@@ -56,7 +58,7 @@ const Register: React.FC = () => {
           />
           
           <TextField
-            label="Email"
+            label={t('auth.email')}
             type="email"
             fullWidth
             margin="normal"
@@ -65,7 +67,7 @@ const Register: React.FC = () => {
           />
           
           <TextField
-            label="Password"
+            label={t('auth.password')}
             type="password"
             fullWidth
             margin="normal"
@@ -74,7 +76,7 @@ const Register: React.FC = () => {
           />
           
           <TextField
-            label="Confirm Password"
+            label={t('auth.confirmPassword')}
             type="password"
             fullWidth
             margin="normal"
@@ -91,7 +93,7 @@ const Register: React.FC = () => {
             sx={{ mt: 3 }}
             disabled={isLoading}
           >
-            {isLoading ? 'Registering...' : 'Register'}
+            {isLoading ? t('common.loading') : t('auth.register')}
           </Button>
         </Box>
       </Paper>

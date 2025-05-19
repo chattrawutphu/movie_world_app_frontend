@@ -3,8 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { TextField, Button, Typography, Box, Paper, Container, Alert } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { login } from './authSlice';
+import { useTranslation } from 'react-i18next';
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
@@ -27,7 +29,7 @@ const Login: React.FC = () => {
     setFormError('');
     
     if (!email || !password) {
-      setFormError('Email and password are required');
+      setFormError(t('auth.credentialsRequired'));
       return;
     }
     
@@ -38,7 +40,7 @@ const Login: React.FC = () => {
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Typography variant="h4" align="center" gutterBottom>
-          Login
+          {t('auth.login')}
         </Typography>
         
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -46,7 +48,7 @@ const Login: React.FC = () => {
         
         <Box component="form" onSubmit={handleSubmit}>
           <TextField
-            label="Email"
+            label={t('auth.email')}
             type="email"
             fullWidth
             margin="normal"
@@ -55,7 +57,7 @@ const Login: React.FC = () => {
           />
           
           <TextField
-            label="Password"
+            label={t('auth.password')}
             type="password"
             fullWidth
             margin="normal"
@@ -72,7 +74,7 @@ const Login: React.FC = () => {
             sx={{ mt: 3 }}
             disabled={isLoading}
           >
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? t('common.loading') : t('auth.login')}
           </Button>
         </Box>
       </Paper>

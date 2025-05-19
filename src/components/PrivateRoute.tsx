@@ -1,26 +1,29 @@
 import React from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAppSelector } from '../app/hooks';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../features/auth/authSlice';
 
 interface PrivateRouteProps {
   allowedRoles?: string[];
+  redirectTo?: string;
 }
 
-const PrivateRoute: React.FC<PrivateRouteProps> = ({ allowedRoles }) => {
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const location = useLocation();
+const PrivateRoute: React.FC<PrivateRouteProps> = ({ 
+  allowedRoles = [], 
+  redirectTo = '/login' 
+}) => {
+  const { isAuthenticated, user } = useAuth();
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to={redirectTo} />;
+  }
+  
+  // If the user doesn't have the required role, redirect to unauthorized
+  if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/unauthorized" />;
   }
 
-  // Check if user has required role
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  // User is authenticated and authorized, render the protected component
+  // If authenticated and has the required role, render the children
   return <Outlet />;
 };
 
